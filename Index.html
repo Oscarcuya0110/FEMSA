@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FEMSA 2025 — Dashboard Financiero Interactivo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f8f7f4;--surface:#fff;--surface2:#f1efe8;--border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.16);
+  --text:#1a1a18;--text2:#5f5e5a;--text3:#888780;
+  --blue:#378ADD;--blue-bg:#E6F1FB;--blue-dk:#0C447C;
+  --green:#3B6D11;--green-bg:#EAF3DE;--green-dk:#27500A;
+  --amber:#BA7517;--amber-bg:#FAEEDA;--amber-dk:#633806;
+  --red:#A32D2D;--red-bg:#FCEBEB;--red-dk:#791F1F;
+  --teal:#0F6E56;--teal-bg:#E1F5EE;--teal-dk:#085041;
+  --purple:#534AB7;--purple-bg:#EEEDFE;--purple-dk:#3C3489;
+  --r:10px;--rl:14px}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1c1c1a;--surface:#242422;--surface2:#2c2c2a;--border:rgba(255,255,255,.09);--border2:rgba(255,255,255,.16);
+  --text:#f0efe8;--text2:#b4b2a9;--text3:#888780;
+  --blue:#85B7EB;--blue-bg:#0c2a45;--blue-dk:#B5D4F4;
+  --green:#97C459;--green-bg:#1a2e08;--green-dk:#C0DD97;
+  --amber:#EF9F27;--amber-bg:#2e1f06;--amber-dk:#FAC775;
+  --red:#F09595;--red-bg:#2e0f0f;--red-dk:#F7C1C1;
+  --teal:#5DCAA5;--teal-bg:#042820;--teal-dk:#9FE1CB;
+  --purple:#AFA9EC;--purple-bg:#1e1b40;--purple-dk:#CECBF6}}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+.topbar{background:var(--surface);border-bottom:.5px solid var(--border2);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:54px;gap:12px}
+.logo{font-size:15px;font-weight:600;letter-spacing:-.3px}
+.badge{font-size:11px;background:var(--blue-bg);color:var(--blue-dk);padding:2px 8px;border-radius:100px;font-weight:500;white-space:nowrap}
+.topbar-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.btn{font-size:12px;padding:6px 12px;border-radius:7px;border:.5px solid var(--border2);background:var(--surface);color:var(--text);cursor:pointer;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.btn:hover{background:var(--surface2)}
+.btn-primary{background:var(--text);color:var(--surface);border-color:var(--text)}
+.btn-primary:hover{opacity:.85}
+.nav{background:var(--surface);border-bottom:.5px solid var(--border);padding:0 1.5rem;display:flex;gap:2px;overflow-x:auto}
+.nav-btn{font-size:13px;padding:10px 12px;border:none;background:none;color:var(--text2);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;margin-bottom:-.5px}
+.nav-btn.active{color:var(--blue-dk);border-bottom-color:var(--blue);font-weight:500}
+.nav-btn:hover:not(.active){color:var(--text)}
+/* AI bar */
+.ai-bar{background:var(--surface);border-bottom:.5px solid var(--border2);padding:9px 1.5rem;display:flex;align-items:center;gap:10px}
+.ai-input-wrap{flex:1;display:flex;align-items:center;gap:8px;background:var(--surface2);border:.5px solid var(--border2);border-radius:9px;padding:0 12px}
+.ai-input{flex:1;border:none;background:none;font-size:13px;color:var(--text);padding:8px 0;outline:none;font-family:inherit}
+.ai-input::placeholder{color:var(--text3)}
+.ai-send{padding:7px 14px;border-radius:7px;border:none;background:#378ADD;color:#fff;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap}
+.ai-send:hover{background:#185FA5}
+.ai-send:disabled{opacity:.5;cursor:default}
+.chips{display:flex;gap:5px;flex-wrap:wrap;padding:7px 1.5rem;background:var(--surface);border-bottom:.5px solid var(--border)}
+.chip{font-size:11px;padding:3px 9px;border-radius:100px;border:.5px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;white-space:nowrap}
+.chip:hover{background:var(--blue-bg);color:var(--blue-dk);border-color:var(--blue)}
+.ai-panel{margin:0 1.5rem .75rem;border:.5px solid var(--border2);border-radius:var(--rl);overflow:hidden}
+.ai-head{background:var(--blue-bg);padding:9px 14px;display:flex;align-items:center;justify-content:space-between}
+.ai-head-title{font-size:12px;font-weight:500;color:var(--blue-dk)}
+.ai-close{background:none;border:none;color:var(--blue-dk);cursor:pointer;font-size:17px;line-height:1;padding:0 2px}
+.ai-body{background:var(--surface);padding:14px}
+.ai-thinking{display:flex;align-items:center;gap:7px;color:var(--text3);font-size:13px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--blue);animation:pulse 1.2s infinite}
+.dot:nth-child(2){animation-delay:.2s}.dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,80%,100%{opacity:.2}40%{opacity:1}}
+.ai-answer{font-size:13px;color:var(--text);line-height:1.7}
+.hl{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--blue-bg);border-radius:7px;margin:7px 0;border-left:3px solid var(--blue)}
+.hl-label{font-size:12px;color:var(--blue-dk);flex:1}
+.hl-val{font-size:17px;font-weight:600;color:var(--blue-dk)}
+.ai-goto{display:inline-flex;align-items:center;gap:5px;font-size:12px;padding:5px 11px;border-radius:100px;background:var(--blue);color:#fff;border:none;cursor:pointer;margin-top:8px}
+.ai-goto:hover{background:var(--blue-dk)}
+/* Layout */
+.content{padding:1.25rem 1.5rem;max-width:1200px;margin:0 auto}
+.section{display:none}.section.active{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.875rem;margin-bottom:.875rem}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.875rem;margin-bottom:.875rem}
+.g21{display:grid;grid-template-columns:2fr 1fr;gap:.875rem;margin-bottom:.875rem}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:.875rem}
+@media(max-width:720px){.g2,.g3,.g21,.g4{grid-template-columns:1fr}}
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:9px;margin-bottom:1.1rem}
+.kpi{background:var(--surface);border:.5px solid var(--border);border-radius:var(--r);padding:.9rem 1rem}
+.kpi-label{font-size:10px;color:var(--text3);font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin-bottom:5px}
+.kpi-value{font-size:20px;font-weight:600;color:var(--text);letter-spacing:-.4px}
+.kpi-delta{font-size:11px;margin-top:3px}
+.up{color:var(--green)}.down{color:var(--red)}.neutral{color:var(--text3)}
+.card{background:var(--surface);border:.5px solid var(--border);border-radius:var(--rl);padding:1.1rem}
+.card-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:.875rem}
+.chart-wrap{position:relative;width:100%}
+.divider{border:none;border-top:.5px solid var(--border);margin:.875rem 0}
+.sub{font-size:12px;font-weight:500;color:var(--text2);margin:.75rem 0 .4rem}
+.pill{display:inline-flex;align-items:center;font-size:10px;padding:2px 7px;border-radius:100px;font-weight:500}
+.pill-green{background:var(--green-bg);color:var(--green-dk)}
+.pill-red{background:var(--red-bg);color:var(--red-dk)}
+.pill-blue{background:var(--blue-bg);color:var(--blue-dk)}
+.pill-amber{background:var(--amber-bg);color:var(--amber-dk)}
+.pill-purple{background:var(--purple-bg);color:var(--purple-dk)}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+th{font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.04em;padding:7px 9px;text-align:right;border-bottom:.5px solid var(--border2)}
+th:first-child{text-align:left}
+td{padding:8px 9px;text-align:right;border-bottom:.5px solid var(--border);color:var(--text)}
+td:first-child{text-align:left;color:var(--text2)}
+tr:last-child td{border-bottom:none}
+tr.tot td{font-weight:600;background:var(--surface2)}
+tr:hover td{background:var(--surface2)}
+.tw{overflow-x:auto}
+.pr{margin-bottom:9px}
+.pl{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px}
+.pt{height:7px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px}
+.risk-card{border-left:3px solid var(--red);background:var(--red-bg);border-radius:0 var(--r) var(--r) 0;padding:9px 13px;margin-bottom:7px}
+.risk-title{font-size:12px;font-weight:500;color:var(--red-dk);margin-bottom:2px}
+.risk-body{font-size:11px;color:var(--text2);line-height:1.5}
+.leg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:10px}
+.leg-item{display:flex;align-items:center;gap:4px;font-size:11px;color:var(--text2)}
+.leg-dot{width:9px;height:9px;border-radius:2px;flex-shrink:0}
+.wf-row{display:flex;align-items:center;gap:7px;font-size:11px;margin-bottom:5px}
+.wf-label{width:155px;color:var(--text2);text-align:right;flex-shrink:0;font-size:11px}
+.wf-track{flex:1;height:20px;background:var(--surface2);border-radius:3px;overflow:hidden}
+.wf-fill{height:100%;border-radius:3px;display:flex;align-items:center;padding:0 7px;font-size:10px;font-weight:500;white-space:nowrap;color:#fff}
+.wf-val{width:85px;text-align:right;font-size:11px;font-weight:500}
+.cf-row{display:flex;align-items:center;gap:9px;font-size:12px;padding:7px 0;border-bottom:.5px solid var(--border)}
+.cf-row:last-child{border-bottom:none}
+.cf-ico{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0;font-weight:600}
+.cf-lbl{flex:1;color:var(--text2)}
+.cf-v{font-weight:500}
+.note{font-size:10px;color:var(--text3);margin-top:6px}
+footer{text-align:center;padding:1.5rem;font-size:10px;color:var(--text3);border-top:.5px solid var(--border);margin-top:1.5rem}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div style="display:flex;align-items:center;gap:12px">
+    <span class="logo">FEMSA 2025</span>
+    <span class="badge">Dashboard financiero · EF consolidados oficiales</span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" onclick="window.print()">&#128438; PDF</button>
+    <button class="btn btn-primary" onclick="dlHTML()">&#8595; Descargar</button>
+  </div>
+</div>
+
+<nav class="nav">
+  <button class="nav-btn active" onclick="show('resumen',this)">Resumen</button>
+  <button class="nav-btn" onclick="show('resultados',this)">Resultados</button>
+  <button class="nav-btn" onclick="show('balance',this)">Balance</button>
+  <button class="nav-btn" onclick="show('flujo',this)">Flujo de efectivo</button>
+  <button class="nav-btn" onclick="show('segmentos',this)">Segmentos</button>
+  <button class="nav-btn" onclick="show('intangibles',this)">Intangibles</button>
+  <button class="nav-btn" onclick="show('deuda',this)">Deuda</button>
+  <button class="nav-btn" onclick="show('margenes',this)">Márgenes y ratios</button>
+  <button class="nav-btn" onclick="show('capital',this)">Capital y dividendos</button>
+  <button class="nav-btn" onclick="show('riesgos',this)">Riesgos</button>
+</nav>
+
+<div class="ai-bar">
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#378ADD" stroke-width="2" style="flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+  <div class="ai-input-wrap">
+    <input class="ai-input" id="aiQ" type="text" placeholder="Pregunta sobre los EF: ¿dónde están los mayores activos? ¿por qué cayó la utilidad? ¿cuál es la mayor deuda?…" />
+  </div>
+  <button class="ai-send" id="aiBtn" onclick="runAI()">Consultar ↗</button>
+</div>
+<div class="chips">
+  <span style="font-size:10px;color:var(--text3);align-self:center;flex-shrink:0">Consultas rápidas:</span>
+  <button class="chip" onclick="qAI('¿Dónde están concentrados los activos más grandes de FEMSA?')">Mayor concentración de activos</button>
+  <button class="chip" onclick="qAI('¿Por qué cayó la utilidad neta si los ingresos crecieron?')">¿Por qué cayó la utilidad?</button>
+  <button class="chip" onclick="qAI('¿Cuál es el segmento que más vende y cuál el más rentable?')">Segmento más rentable</button>
+  <button class="chip" onclick="qAI('¿Cuál es la estructura de deuda financiera y cuándo vence?')">Estructura de deuda</button>
+  <button class="chip" onclick="qAI('¿Cómo están los arrendamientos y qué impacto tienen?')">Arrendamientos NIIF 16</button>
+  <button class="chip" onclick="qAI('¿Cuáles son las señales de alerta más importantes en los EF?')">Señales de alerta</button>
+  <button class="chip" onclick="qAI('¿Por qué cayó el patrimonio de Ps.381,131M a Ps.329,352M?')">Caída del patrimonio</button>
+  <button class="chip" onclick="qAI('¿Qué tan bien cubre FEMSA su deuda con el flujo operativo?')">Cobertura de deuda</button>
+  <button class="chip" onclick="qAI('¿Cuáles son los principales riesgos identificados por los auditores EY?')">Riesgos de auditoría</button>
+</div>
+<div id="aiWrap" style="display:none"></div>
+
+<div class="content">
+
+<!-- RESUMEN -->
+<div id="sec-resumen" class="section active">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Ingresos totales</div><div class="kpi-value">Ps.840,954M</div><div class="kpi-delta up">▲ +7.6% vs 2024</div></div>
+    <div class="kpi"><div class="kpi-label">Ventas netas</div><div class="kpi-value">Ps.834,390M</div><div class="kpi-delta up">▲ vs 775,551M</div></div>
+    <div class="kpi"><div class="kpi-label">Utilidad bruta</div><div class="kpi-value">Ps.341,576M</div><div class="kpi-delta neutral">Margen 40.9%</div></div>
+    <div class="kpi"><div class="kpi-label">Utilidad neta</div><div class="kpi-value">Ps.33,053M</div><div class="kpi-delta down">▼ −17.9% vs 2024</div></div>
+    <div class="kpi"><div class="kpi-label">U. a controladora</div><div class="kpi-value">Ps.19,431M</div><div class="kpi-delta down">▼ vs 26,735M</div></div>
+    <div class="kpi"><div class="kpi-label">Activo total</div><div class="kpi-value">Ps.795,877M</div><div class="kpi-delta neutral">▼ vs 851,536M</div></div>
+    <div class="kpi"><div class="kpi-label">Pasivo total</div><div class="kpi-value">Ps.466,525M</div><div class="kpi-delta neutral">58.6% del activo</div></div>
+    <div class="kpi"><div class="kpi-label">Capital total</div><div class="kpi-value">Ps.329,352M</div><div class="kpi-delta down">▼ vs 381,131M</div></div>
+    <div class="kpi"><div class="kpi-label">Flujo operativo</div><div class="kpi-value">Ps.71,080M</div><div class="kpi-delta neutral">Estable ≈ 2024</div></div>
+    <div class="kpi"><div class="kpi-label">Efectivo final</div><div class="kpi-value">Ps.107,980M</div><div class="kpi-delta down">▼ vs 139,834M</div></div>
+    <div class="kpi"><div class="kpi-label">Razón corriente</div><div class="kpi-value">1.35×</div><div class="kpi-delta up">283,116/210,014</div></div>
+    <div class="kpi"><div class="kpi-label">Deuda financiera</div><div class="kpi-value">Ps.147,666M</div><div class="kpi-delta neutral">CP:20,674 LP:126,992</div></div>
+  </div>
+  <div class="g21">
+    <div class="card">
+      <div class="card-title">Evolución ingresos, utilidad bruta y utilidad neta 2023–2025 (Ps. millones)</div>
+      <div class="leg"><span class="leg-item"><span class="leg-dot" style="background:#378ADD"></span>Ingresos</span><span class="leg-item"><span class="leg-dot" style="background:#1D9E75"></span>U. bruta</span><span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>U. neta</span></div>
+      <div class="chart-wrap" style="height:220px"><canvas id="c-overview" role="img" aria-label="Ingresos utilidad bruta y neta 2023 2024 2025"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Estructura financiera 2025</div>
+      <div class="leg"><span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Pasivo</span><span class="leg-item"><span class="leg-dot" style="background:#1D9E75"></span>Capital</span></div>
+      <div class="chart-wrap" style="height:160px"><canvas id="c-estructura" role="img" aria-label="Pasivo vs capital FEMSA 2025"></canvas></div>
+      <div class="divider"></div>
+      <div style="text-align:center;padding:.25rem 0">
+        <div style="font-size:22px;font-weight:600;color:var(--text)">58.6%</div>
+        <div style="font-size:10px;color:var(--text3)">Pasivo / Activo total <span class="pill pill-amber">Apalancado</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="g3">
+    <div class="card">
+      <div class="card-title">Retorno al accionista 2025 vs flujo operativo</div>
+      <div class="pr"><div class="pl"><span>Dividendos pagados</span><span style="color:var(--red)">Ps.49,925M</span></div><div class="pt"><div class="pf" style="width:70%;background:#E24B4A"></div></div></div>
+      <div class="pr"><div class="pl"><span>Recompra acciones</span><span style="color:var(--amber-dk)">Ps.12,364M</span></div><div class="pt"><div class="pf" style="width:17%;background:#BA7517"></div></div></div>
+      <div class="pr"><div class="pl"><span>Flujo operativo</span><span style="color:var(--green)">Ps.71,080M</span></div><div class="pt"><div class="pf" style="width:100%;background:#3B6D11"></div></div></div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--text2)">Payout efectivo: <strong style="color:var(--text)">87.7%</strong> del flujo operativo</div>
+      <div class="note">Fuente: Estado de Flujos de Efectivo y Estado de Variaciones en Capital 2025</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Desinversiones estratégicas 2025</div>
+      <div class="cf-row"><div class="cf-ico" style="background:var(--green-bg);color:var(--green-dk)">H</div><div class="cf-lbl">Heineken (acciones restantes)</div><div class="cf-v up">+7,598</div></div>
+      <div class="cf-row"><div class="cf-ico" style="background:var(--blue-bg);color:var(--blue-dk)">S</div><div class="cf-lbl">Solistica (logistics)</div><div class="cf-v up">+4,042</div></div>
+      <div class="cf-row"><div class="cf-ico" style="background:var(--amber-bg);color:var(--amber-dk)">P</div><div class="cf-lbl">PTM (soluciones plásticas)</div><div class="cf-v up">+2,747</div></div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--text2)">Total ingresado: <strong>Ps.14,387M</strong></div>
+      <div class="note">Fuente: Nota 4.3 — Disposiciones y Estado de Flujos</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Variación neta de efectivo 2025</div>
+      <div class="cf-row"><div class="cf-ico" style="background:var(--green-bg);color:var(--green-dk);font-size:10px">OP</div><div class="cf-lbl">Actividades de operación</div><div class="cf-v up">+71,080</div></div>
+      <div class="cf-row"><div class="cf-ico" style="background:var(--amber-bg);color:var(--amber-dk);font-size:10px">INV</div><div class="cf-lbl">Actividades de inversión</div><div class="cf-v down">−2,061</div></div>
+      <div class="cf-row"><div class="cf-ico" style="background:var(--red-bg);color:var(--red-dk);font-size:10px">FIN</div><div class="cf-lbl">Actividades de financiamiento</div><div class="cf-v down">−92,000</div></div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--text2)">Efectivo inicio: <strong>139,834</strong> → Efectivo fin: <strong>107,980</strong></div>
+      <div style="font-size:11px;margin-top:3px">Variación: <strong class="down">−Ps.22,981M</strong> <span class="pill pill-amber">−16.4%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- RESULTADOS -->
+<div id="sec-resultados" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Ventas netas 2025</div><div class="kpi-value">834,390</div><div class="kpi-delta up">▲ +7.6%</div></div>
+    <div class="kpi"><div class="kpi-label">Costo de ventas</div><div class="kpi-value">499,378</div><div class="kpi-delta down">59.8% de ventas</div></div>
+    <div class="kpi"><div class="kpi-label">Utilidad bruta</div><div class="kpi-value">341,576</div><div class="kpi-delta up">Margen 40.9%</div></div>
+    <div class="kpi"><div class="kpi-label">Gastos admin.</div><div class="kpi-value">39,325</div><div class="kpi-delta neutral">4.7% de ventas</div></div>
+    <div class="kpi"><div class="kpi-label">Gastos de ventas</div><div class="kpi-value">229,324</div><div class="kpi-delta down">27.5% de ventas</div></div>
+    <div class="kpi"><div class="kpi-label">Gasto financiero</div><div class="kpi-value">21,303</div><div class="kpi-delta neutral">Intereses y derivados</div></div>
+    <div class="kpi"><div class="kpi-label">U. antes imp.</div><div class="kpi-value">52,837</div><div class="kpi-delta neutral">Margen 6.33%</div></div>
+    <div class="kpi"><div class="kpi-label">Impuestos</div><div class="kpi-value">19,860</div><div class="kpi-delta neutral">Tasa efectiva 37.6%</div></div>
+    <div class="kpi"><div class="kpi-label">U. neta consolidada</div><div class="kpi-value">33,053</div><div class="kpi-delta down">▼ −17.9%</div></div>
+    <div class="kpi"><div class="kpi-label">U. a controladora</div><div class="kpi-value">19,431</div><div class="kpi-delta down">▼ −27.3%</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Comparativa 2023–2025 (Ps. millones)</div>
+      <div class="leg"><span class="leg-item"><span class="leg-dot" style="background:#378ADD"></span>2023</span><span class="leg-item"><span class="leg-dot" style="background:#1D9E75"></span>2024</span><span class="leg-item"><span class="leg-dot" style="background:#534AB7"></span>2025</span></div>
+      <div class="chart-wrap" style="height:240px"><canvas id="c-resultados" role="img" aria-label="Comparativa resultados 2023 2024 2025"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Cascada de rentabilidad 2025 — de ingresos a utilidad neta</div>
+      <div id="wfContainer" style="margin-top:4px"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Estado de resultados consolidado detallado (Ps. millones)</div>
+    <div class="tw">
+      <table>
+        <thead><tr><th>Concepto</th><th>2025</th><th>2024</th><th>2023</th><th>Var. 25/24</th></tr></thead>
+        <tbody>
+          <tr><td>Ventas netas</td><td>834,390</td><td>775,551</td><td>699,640</td><td class="up">+7.6%</td></tr>
+          <tr><td>Otros ingresos de operación</td><td>6,564</td><td>6,034</td><td>3,052</td><td class="up">+8.8%</td></tr>
+          <tr class="tot"><td>Ingresos totales</td><td>840,954</td><td>781,585</td><td>702,692</td><td class="up">+7.6%</td></tr>
+          <tr><td>Costo de ventas</td><td>(499,378)</td><td>(460,072)</td><td>(423,185)</td><td class="down">−8.5%</td></tr>
+          <tr class="tot"><td>Utilidad bruta</td><td>341,576</td><td>321,513</td><td>279,507</td><td class="up">+6.2%</td></tr>
+          <tr><td>Gastos de administración</td><td>(39,325)</td><td>(39,085)</td><td>(32,307)</td><td class="down">−0.6%</td></tr>
+          <tr><td>Gastos de ventas</td><td>(229,324)</td><td>(211,966)</td><td>(188,732)</td><td class="down">−8.2%</td></tr>
+          <tr><td>Otros ingresos netos</td><td>3,317</td><td>3,588</td><td>13,102</td><td class="down">−7.5%</td></tr>
+          <tr><td>Otros gastos netos</td><td>(6,133)</td><td>(9,440)</td><td>(6,252)</td><td class="up">+35%</td></tr>
+          <tr><td>Gasto financiero</td><td>(21,303)</td><td>(20,002)</td><td>(14,916)</td><td class="down">−6.5%</td></tr>
+          <tr><td>Producto financiero</td><td>7,662</td><td>11,910</td><td>17,609</td><td class="down">−35.7%</td></tr>
+          <tr><td>Pérdida por fluctuación cambiaria</td><td>(5,747)</td><td>11,929</td><td>(9,849)</td><td>—</td></tr>
+          <tr><td>Ganancia posición monetaria</td><td>385</td><td>209</td><td>94</td><td class="up">+84.2%</td></tr>
+          <tr><td>Ganancia/pérd. instrumentos financieros</td><td>1,729</td><td>(2,109)</td><td>(440)</td><td>—</td></tr>
+          <tr class="tot"><td>U. antes impuestos (operaciones continuas)</td><td>52,837</td><td>66,547</td><td>57,816</td><td class="down">−20.6%</td></tr>
+          <tr><td>Impuesto a la utilidad</td><td>(19,860)</td><td>(25,433)</td><td>(12,971)</td><td class="up">+21.9%</td></tr>
+          <tr><td>Participación en pérdidas de asociadas</td><td>(1,498)</td><td>(993)</td><td>(406)</td><td class="down">−50.9%</td></tr>
+          <tr class="tot"><td>Utilidad neta operaciones continuas</td><td>31,479</td><td>40,121</td><td>44,439</td><td class="down">−21.5%</td></tr>
+          <tr><td>U. neta operaciones discontinuas</td><td>1,574</td><td>115</td><td>32,238</td><td>—</td></tr>
+          <tr class="tot"><td>Utilidad neta consolidada</td><td>33,053</td><td>40,236</td><td>76,677</td><td class="down">−17.9%</td></tr>
+          <tr><td>Atribuible a controladora</td><td>19,431</td><td>26,735</td><td>65,689</td><td class="down">−27.3%</td></tr>
+          <tr><td>Atribuible a no controladora</td><td>13,622</td><td>13,501</td><td>10,988</td><td class="up">+0.9%</td></tr>
+          <tr><td>UPA básica Serie B (Ps.)</td><td>0.91</td><td>1.34</td><td>1.67</td><td class="down">−32.1%</td></tr>
+          <tr><td>UPA básica Serie D (Ps.)</td><td>1.25</td><td>1.70</td><td>2.09</td><td class="down">−26.5%</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="note">Fuente: Estado Consolidado de Resultados FEMSA 2025 — Pág. 10 del reporte oficial</div>
+  </div>
+</div>
+
+<!-- BALANCE -->
+<div id="sec-balance" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Efectivo</div><div class="kpi-value">107,980</div><div class="kpi-delta down">▼ vs 139,834</div></div>
+    <div class="kpi"><div class="kpi-label">Inversiones CP</div><div class="kpi-value">20,042</div><div class="kpi-delta down">▼ vs 43,212</div></div>
+    <div class="kpi"><div class="kpi-label">Clientes neto</div><div class="kpi-value">48,319</div><div class="kpi-delta up">▲ vs 43,192</div></div>
+    <div class="kpi"><div class="kpi-label">Inventarios</div><div class="kpi-value">69,452</div><div class="kpi-delta up">▲ vs 67,464</div></div>
+    <div class="kpi"><div class="kpi-label">Activo circulante</div><div class="kpi-value">283,116</div><div class="kpi-delta down">▼ vs 342,311</div></div>
+    <div class="kpi"><div class="kpi-label">PP&amp;E neto</div><div class="kpi-value">189,672</div><div class="kpi-delta up">▲ vs 177,511</div></div>
+    <div class="kpi"><div class="kpi-label">Derecho de uso</div><div class="kpi-value">99,543</div><div class="kpi-delta up">▲ vs 97,960</div></div>
+    <div class="kpi"><div class="kpi-label">Intangibles neto</div><div class="kpi-value">145,506</div><div class="kpi-delta down">▼ vs 146,336</div></div>
+    <div class="kpi"><div class="kpi-label">Activo no circ.</div><div class="kpi-value">512,761</div><div class="kpi-delta up">▲ vs 509,225</div></div>
+    <div class="kpi"><div class="kpi-label">Activo total</div><div class="kpi-value">795,877</div><div class="kpi-delta down">▼ vs 851,536</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Composición del activo 2025 (Ps. millones)</div>
+      <div class="chart-wrap" style="height:260px"><canvas id="c-activo" role="img" aria-label="Composición activo FEMSA 2025"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Activo vs Pasivo vs Capital (comparativa 2024–2025)</div>
+      <div class="leg"><span class="leg-item"><span class="leg-dot" style="background:#378ADD"></span>Activo</span><span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Pasivo</span><span class="leg-item"><span class="leg-dot" style="background:#1D9E75"></span>Capital</span></div>
+      <div class="chart-wrap" style="height:220px"><canvas id="c-balance" role="img" aria-label="Activo pasivo capital 2024 2025"></canvas></div>
+    </div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Detalle de activos (Ps. millones)</div>
+      <div class="tw"><table>
+        <thead><tr><th>Activo</th><th>2025</th><th>2024</th><th>% del total</th></tr></thead>
+        <tbody>
+          <tr class="tot"><td colspan="4">Activo circulante</td></tr>
+          <tr><td>Efectivo y equivalentes</td><td>107,980</td><td>139,834</td><td><span class="pill pill-blue">13.6%</span></td></tr>
+          <tr><td>Inversiones CP</td><td>20,042</td><td>43,212</td><td><span class="pill pill-blue">2.5%</span></td></tr>
+          <tr><td>Clientes, neto</td><td>48,319</td><td>43,192</td><td><span class="pill pill-blue">6.1%</span></td></tr>
+          <tr><td>Inventarios</td><td>69,452</td><td>67,464</td><td><span class="pill pill-blue">8.7%</span></td></tr>
+          <tr><td>Impuestos por recuperar</td><td>30,215</td><td>26,190</td><td><span class="pill pill-blue">3.8%</span></td></tr>
+          <tr><td>Otros activos financieros circ.</td><td>1,120</td><td>1,782</td><td><span class="pill pill-blue">0.1%</span></td></tr>
+          <tr><td>Otros activos circulantes</td><td>5,988</td><td>6,242</td><td><span class="pill pill-blue">0.8%</span></td></tr>
+          <tr class="tot"><td>Total activo circulante</td><td>283,116</td><td>342,311</td><td><span class="pill pill-blue">35.6%</span></td></tr>
+          <tr class="tot"><td colspan="4">Activo no circulante</td></tr>
+          <tr><td>Inversiones método de participación</td><td>25,726</td><td>28,697</td><td><span class="pill pill-amber">3.2%</span></td></tr>
+          <tr><td>Propiedad, planta y equipo</td><td>189,672</td><td>177,511</td><td><span class="pill pill-amber">23.8%</span></td></tr>
+          <tr><td>Derecho de uso (NIIF 16)</td><td>99,543</td><td>97,960</td><td><span class="pill pill-amber">12.5%</span></td></tr>
+          <tr><td>Activos intangibles neto</td><td>145,506</td><td>146,336</td><td><span class="pill pill-amber">18.3%</span></td></tr>
+          <tr><td>Impuestos diferidos por recuperar</td><td>31,014</td><td>26,912</td><td><span class="pill pill-amber">3.9%</span></td></tr>
+          <tr><td>Otros activos financieros NC</td><td>13,454</td><td>23,280</td><td><span class="pill pill-amber">1.7%</span></td></tr>
+          <tr><td>Otros activos no circulantes</td><td>7,846</td><td>8,529</td><td><span class="pill pill-amber">1.0%</span></td></tr>
+          <tr class="tot"><td>Total activo no circulante</td><td>512,761</td><td>509,225</td><td><span class="pill pill-amber">64.4%</span></td></tr>
+          <tr class="tot"><td>ACTIVO TOTAL</td><td>795,877</td><td>851,536</td><td><span class="pill pill-green">100%</span></td></tr>
+        </tbody>
+      </table></div>
+      <div class="note">Fuente: Estado Consolidado de Situación Financiera — Pág. 9</div>
+    </div>
+    <div class="card">
+      <div class="card-title">Detalle de pasivos y capital (Ps. millones)</div>
+      <div class="tw"><table>
+        <thead><tr><th>Pasivo / Capital</th><th>2025</th><th>2024</th><th>% del total</th></tr></thead>
+        <tbody>
+          <tr class="tot"><td colspan="4">Pasivo circulante</td></tr>
+          <tr><td>Préstamos bancarios CP</td><td>5,862</td><td>3,775</td><td><span class="pill pill-red">0.7%</span></td></tr>
+          <tr><td>Vencimiento LP corriente</td><td>14,812</td><td>2,947</td><td><span class="pill pill-red">1.9%</span></td></tr>
+          <tr><td>Pasivo arrendamiento CP</td><td>15,188</td><td>13,796</td><td><span class="pill pill-red">1.9%</span></td></tr>
+          <tr><td>Intereses por pagar</td><td>1,790</td><td>1,802</td><td><span class="pill pill-red">0.2%</span></td></tr>
+          <tr><td>Proveedores</td><td>93,688</td><td>96,912</td><td><span class="pill pill-red">11.8%</span></td></tr>
+          <tr><td>Cuentas por pagar</td><td>29,913</td><td>32,370</td><td><span class="pill pill-red">3.8%</span></td></tr>
+          <tr><td>Impuestos por pagar</td><td>4,647</td><td>7,207</td><td><span class="pill pill-red">0.6%</span></td></tr>
+          <tr><td>Otros pasivos financieros circ.</td><td>44,114</td><td>37,169</td><td><span class="pill pill-red">5.5%</span></td></tr>
+          <tr class="tot"><td>Total pasivo circulante</td><td>210,014</td><td>202,930</td><td><span class="pill pill-red">26.4%</span></td></tr>
+          <tr class="tot"><td colspan="4">Pasivo no circulante</td></tr>
+          <tr><td>Préstamos bancarios LP</td><td>126,992</td><td>141,482</td><td><span class="pill pill-red">16.0%</span></td></tr>
+          <tr><td>Pasivo arrendamiento LP</td><td>94,703</td><td>94,299</td><td><span class="pill pill-red">11.9%</span></td></tr>
+          <tr><td>Beneficios post-empleo</td><td>10,719</td><td>8,968</td><td><span class="pill pill-red">1.3%</span></td></tr>
+          <tr><td>Impuestos diferidos por pagar</td><td>8,284</td><td>8,693</td><td><span class="pill pill-red">1.0%</span></td></tr>
+          <tr><td>Otros pasivos financieros NC</td><td>8,982</td><td>6,759</td><td><span class="pill pill-red">1.1%</span></td></tr>
+          <tr><td>Provisiones</td><td>3,322</td><td>3,875</td><td><span class="pill pill-red">0.4%</span></td></tr>
+          <tr class="tot"><td>Total pasivo no circulante</td><td>256,511</td><td>267,475</td><td><span class="pill pill-red">32.2%</span></td></tr>
+          <tr class="tot"><td>TOTAL PASIVO</td><td>466,525</td><td>470,405</td><td><span class="pill pill-red">58.6%</span></td></tr>
+          <tr><td>Capital social</td><td>3,221</td><td>3,261</td><td>—</td></tr>
+          <tr><td>Prima en suscripción</td><td>(17,413)</td><td>(2,586)</td><td>—</td></tr>
+          <tr><td>Utilidades retenidas</td><td>278,825</td><td>306,400</td><td>—</td></tr>
+          <tr><td>OPUIA acumuladas</td><td>(19,651)</td><td>(9,573)</td><td>—</td></tr>
+          <tr class="tot"><td>Capital a controladora</td><td>244,982</td><td>297,502</td><td><span class="pill pill-green">30.8%</span></td></tr>
+          <tr><td>Participación no controladora</td><td>84,370</td><td>83,629</td><td><span class="pill pill-green">10.6%</span></td></tr>
+          <tr class="tot"><td>TOTAL CAPITAL</td><td>329,352</td><td>381,131</td><td><span class="pill pill-green">41.4%</span></td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- FLUJO -->
+<div id="sec-flujo" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Flujo operativo</div><div class="kpi-value">71,080</div><div class="kpi-delta neutral">Estable</div></div>
+    <div class="kpi"><div class="kpi-label">Flujo inversión</div><div class="kpi-value">−2,061</div><div class="kpi-delta neutral">Desinv. compensan</div></div>
+    <div class="kpi"><div class="kpi-label">Flujo financiamiento</div><div class="kpi-value">−92,000</div><div class="kpi-delta down">Dividendos+recompras</div></div>
+    <div class="kpi"><div class="kpi-label">Depreciación</div><div class="kpi-value">40,291</div><div class="kpi-delta up">▲ vs 35,199</div></div>
+    <div class="kpi"><div class="kpi-label">Imp. pagados</div><div class="kpi-value">27,074</div><div class="kpi-delta neutral">vs 27,785 en 2024</div></div>
+    <div class="kpi"><div class="kpi-label">Capex (PP&amp;E)</div><div class="kpi-value">38,502</div><div class="kpi-delta up">▼ vs 43,682</div></div>
+    <div class="kpi"><div class="kpi-label">Dividendos pagados</div><div class="kpi-value">49,925</div><div class="kpi-delta down">▲ vs 25,080</div></div>
+    <div class="kpi"><div class="kpi-label">Recompra acciones</div><div class="kpi-value">12,364</div><div class="kpi-delta neutral">vs 20,311 en 2024</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Evolución flujo operativo vs dividendos 2023–2025</div>
+      <div class="leg"><span class="leg-item"><span class="leg-dot" style="background:#1D9E75"></span>Flujo operativo</span><span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Dividendos pagados</span></div>
+      <div class="chart-wrap" style="height:220px"><canvas id="c-flujo" role="img" aria-label="Flujo operativo vs dividendos 2023 2024 2025"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Puente de efectivo 2025 (Ps. millones)</div>
+      <div class="chart-wrap" style="height:220px"><canvas id="c-puente" role="img" aria-label="Puente de efectivo FEMSA 2025"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Estado de flujos de efectivo detallado (Ps. millones)</div>
+    <div class="tw"><table>
+      <thead><tr><th>Concepto</th><th>2025</th><th>2024</th><th>2023</th></tr></thead>
+      <tbody>
+        <tr class="tot"><td colspan="4">Actividades de operación</td></tr>
+        <tr><td>U. antes impuestos + operaciones discontinuas</td><td>52,913</td><td>65,669</td><td>89,648</td></tr>
+        <tr><td>Depreciación y amortización</td><td>44,138</td><td>39,310</td><td>34,017</td></tr>
+        <tr><td>Pérdida (ganancia) cambiaria neta</td><td>5,747</td><td>(11,929)</td><td>9,849</td></tr>
+        <tr><td>Gasto financiero ajustado</td><td>21,303</td><td>20,002</td><td>14,916</td></tr>
+        <tr><td>Producto financiero</td><td>(7,662)</td><td>(11,910)</td><td>(17,609)</td></tr>
+        <tr><td>Cambios en capital de trabajo</td><td>(25,528)</td><td>(7,290)</td><td>(2,773)</td></tr>
+        <tr><td>Impuestos pagados</td><td>(27,074)</td><td>(27,785)</td><td>(29,507)</td></tr>
+        <tr class="tot"><td>Flujo operativo neto</td><td>71,080</td><td>71,510</td><td>49,679</td></tr>
+        <tr class="tot"><td colspan="4">Actividades de inversión</td></tr>
+        <tr><td>Ingreso venta Heineken</td><td>7,598</td><td>—</td><td>133,222</td></tr>
+        <tr><td>Ingreso venta PTM</td><td>2,747</td><td>—</td><td>—</td></tr>
+        <tr><td>Ingreso venta Solistica</td><td>4,042</td><td>—</td><td>—</td></tr>
+        <tr><td>Ingreso vencimiento inversiones</td><td>18,255</td><td>—</td><td>—</td></tr>
+        <tr><td>Intereses cobrados</td><td>7,467</td><td>11,842</td><td>8,871</td></tr>
+        <tr><td>Adquisición PP&amp;E</td><td>(38,502)</td><td>(43,682)</td><td>(34,814)</td></tr>
+        <tr><td>Adquisición intangibles</td><td>(3,545)</td><td>(3,631)</td><td>(3,306)</td></tr>
+        <tr><td>Compra inversiones en efectivo</td><td>—</td><td>(8,740)</td><td>(26,725)</td></tr>
+        <tr class="tot"><td>Flujo inversión neto</td><td>(2,061)</td><td>(33,122)</td><td>132,292</td></tr>
+        <tr class="tot"><td colspan="4">Actividades de financiamiento</td></tr>
+        <tr><td>Ingresos préstamos bancarios</td><td>11,333</td><td>1,207</td><td>11,238</td></tr>
+        <tr><td>Pagos préstamos bancarios</td><td>(1,817)</td><td>(6,364)</td><td>(43,421)</td></tr>
+        <tr><td>Dividendos pagados</td><td>(49,925)</td><td>(25,080)</td><td>(18,798)</td></tr>
+        <tr><td>Recompra de acciones</td><td>(12,364)</td><td>(20,311)</td><td>—</td></tr>
+        <tr><td>Pagos pasivos arrendamiento</td><td>(15,791)</td><td>(12,122)</td><td>(9,453)</td></tr>
+        <tr><td>Intereses pagados arrendamiento</td><td>(8,270)</td><td>(7,553)</td><td>(6,718)</td></tr>
+        <tr><td>Intereses pagados deuda</td><td>(8,787)</td><td>(8,603)</td><td>(10,587)</td></tr>
+        <tr class="tot"><td>Flujo financiamiento neto</td><td>(92,000)</td><td>(84,049)</td><td>(82,054)</td></tr>
+        <tr><td>Efectivo inicial</td><td>139,834</td><td>183,303</td><td>82,564</td></tr>
+        <tr class="tot"><td>Efectivo final</td><td>107,980</td><td>139,834</td><td>183,303</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">Fuente: Estado Consolidado de Flujos de Efectivo — Págs. 13–14</div>
+  </div>
+</div>
+
+<!-- SEGMENTOS -->
+<div id="sec-segmentos" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Prox. Américas</div><div class="kpi-value">328,839M</div><div class="kpi-delta neutral">39.1% ingresos</div></div>
+    <div class="kpi"><div class="kpi-label">Coca-Cola FEMSA</div><div class="kpi-value">291,746M</div><div class="kpi-delta neutral">34.7% ingresos</div></div>
+    <div class="kpi"><div class="kpi-label">División Salud</div><div class="kpi-value">88,129M</div><div class="kpi-delta neutral">10.5% ingresos</div></div>
+    <div class="kpi"><div class="kpi-label">División Combustibles</div><div class="kpi-value">67,195M</div><div class="kpi-delta neutral">8.0% ingresos</div></div>
+    <div class="kpi"><div class="kpi-label">Prox. Europa</div><div class="kpi-value">57,028M</div><div class="kpi-delta neutral">6.8% ingresos</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Ingresos por segmento 2025 (Ps. millones)</div>
+      <div class="leg"><span class="leg-item"><span class="leg-dot" style="background:#378ADD"></span>Coca-Cola FEMSA</span><span class="leg-item"><span class="leg-dot" style="background:#1D9E75"></span>Prox. Américas</span><span class="leg-item"><span class="leg-dot" style="background:#534AB7"></span>Salud</span><span class="leg-item"><span class="leg-dot" style="background:#BA7517"></span>Combustibles</span><span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Europa</span></div>
+      <div class="chart-wrap" style="height:230px"><canvas id="c-seg" role="img" aria-label="Ingresos por segmento 2025"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Utilidad antes de impuestos por segmento 2025</div>
+      <div class="chart-wrap" style="height:230px"><canvas id="c-seg-ut" role="img" aria-label="Utilidad por segmento 2025"></canvas></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Segmentos de negocio — detalle completo 2025 (Ps. millones)</div>
+    <div class="tw"><table>
+      <thead><tr><th>Concepto</th><th>CC FEMSA</th><th>Prox. Américas</th><th>Prox. Europa</th><th>Salud</th><th>Combustibles</th><th>Otros</th><th>Consolidado</th></tr></thead>
+      <tbody>
+        <tr><td>Ingresos totales</td><td>291,746</td><td>328,839</td><td>57,028</td><td>88,129</td><td>67,195</td><td>29,128</td><td>840,954</td></tr>
+        <tr><td>Costo de ventas</td><td>158,570</td><td>180,344</td><td>33,778</td><td>64,275</td><td>59,004</td><td>20,025</td><td>499,378</td></tr>
+        <tr class="tot"><td>Utilidad bruta</td><td>133,176</td><td>148,495</td><td>23,250</td><td>23,854</td><td>8,191</td><td>9,103</td><td>341,576</td></tr>
+        <tr><td>Margen bruto %</td><td class="up">45.7%</td><td class="up">45.1%</td><td class="up">40.8%</td><td class="up">27.0%</td><td class="down">12.2%</td><td>31.3%</td><td class="up">40.6%</td></tr>
+        <tr><td>G. administración</td><td>15,043</td><td>10,535</td><td>3,884</td><td>2,455</td><td>290</td><td>10,153</td><td>39,325</td></tr>
+        <tr><td>G. ventas</td><td>76,664</td><td>108,058</td><td>17,018</td><td>18,270</td><td>4,967</td><td>7,561</td><td>229,324</td></tr>
+        <tr class="tot"><td>U. antes impuestos</td><td>37,158</td><td>14,171</td><td>1,723</td><td>642</td><td>1,222</td><td>(2,079)</td><td>52,837</td></tr>
+        <tr><td>Margen UAI %</td><td class="up">12.7%</td><td class="up">4.3%</td><td class="up">3.0%</td><td class="up">0.7%</td><td class="up">1.8%</td><td>—</td><td class="up">6.3%</td></tr>
+        <tr><td>Depreciación y amort.</td><td>15,895</td><td>17,748</td><td>5,756</td><td>4,122</td><td>1,316</td><td>(594)</td><td>44,138</td></tr>
+        <tr class="tot"><td>Total activos</td><td>314,539</td><td>239,785</td><td>44,539</td><td>74,516</td><td>25,867</td><td>200,530</td><td>795,877</td></tr>
+        <tr><td>Total pasivos</td><td>160,511</td><td>183,907</td><td>40,289</td><td>58,659</td><td>19,105</td><td>115,045</td><td>466,525</td></tr>
+        <tr><td>Inversiones en activo fijo</td><td>27,059</td><td>13,721</td><td>1,938</td><td>1,608</td><td>208</td><td>964</td><td>45,315</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">Fuente: Nota 27 — Información por Segmento — Pág. 100. * Ajustes por consolidación excluidos de totales individuales.</div>
+  </div>
+</div>
+
+<!-- INTANGIBLES -->
+<div id="sec-intangibles" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Derechos Coca-Cola</div><div class="kpi-value">74,207M</div><div class="kpi-delta neutral">Vida indefinida</div></div>
+    <div class="kpi"><div class="kpi-label">Crédito mercantil</div><div class="kpi-value">46,102M</div><div class="kpi-delta neutral">Sin amortizar</div></div>
+    <div class="kpi"><div class="kpi-label">Derecho de marca</div><div class="kpi-value">11,706M</div><div class="kpi-delta neutral">Vida indefinida</div></div>
+    <div class="kpi"><div class="kpi-label">Amortizables</div><div class="kpi-value">29,219M</div><div class="kpi-delta neutral">Sistemas, relac., otros</div></div>
+    <div class="kpi"><div class="kpi-label">Total intangibles</div><div class="kpi-value">145,506M</div><div class="kpi-delta neutral">18.3% activo total</div></div>
+    <div class="kpi"><div class="kpi-label">Amortización 2025</div><div class="kpi-value">2,567M</div><div class="kpi-delta neutral">vs 2,617M en 2024</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Composición de activos intangibles 2025 (Ps. millones)</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="c-intang" role="img" aria-label="Composición intangibles FEMSA 2025"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Supuestos pruebas de deterioro Coca-Cola FEMSA — UGE 2025</div>
+      <div class="tw"><table>
+        <thead><tr><th>País</th><th>WACC antes imp.</th><th>WACC después imp.</th><th>Crec. esperado</th><th>Inflación LP</th></tr></thead>
+        <tbody>
+          <tr><td>México</td><td>8.8%</td><td>6.2%</td><td>3.9%</td><td>5.0%</td></tr>
+          <tr><td>Brasil</td><td>11.4%</td><td>7.2%</td><td>3.9%</td><td>3.3%</td></tr>
+          <tr><td>Colombia</td><td>10.5%</td><td>7.9%</td><td>3.4%</td><td>3.5%</td></tr>
+          <tr><td>Argentina</td><td>16.8%</td><td>11.8%</td><td>10.1%</td><td>5.2%</td></tr>
+          <tr><td>Guatemala</td><td>8.8%</td><td>6.8%</td><td>3.8%</td><td>7.3%</td></tr>
+          <tr><td>Costa Rica</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>Nicaragua</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+          <tr><td>Panamá</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note">Fuente: Nota 13 — Activos Intangibles — Análisis de sensibilidad por UGE. Las UGE "pasan" la prueba si el WACC aumenta y el volumen cae 1%.</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Tabla detallada de activos intangibles netos 2025 (Ps. millones)</div>
+    <div class="tw"><table>
+      <thead><tr><th>Intangible</th><th>Costo bruto 2025</th><th>Amortiz. acum.</th><th>Neto 2025</th><th>Neto 2024</th><th>Vida</th></tr></thead>
+      <tbody>
+        <tr><td>Derechos Coca-Cola</td><td>74,207</td><td>—</td><td>74,207</td><td>74,609</td><td><span class="pill pill-blue">Indefinida</span></td></tr>
+        <tr><td>Crédito mercantil (goodwill)</td><td>46,102</td><td>—</td><td>46,102</td><td>46,624</td><td><span class="pill pill-blue">Indefinida</span></td></tr>
+        <tr><td>Derecho de marca</td><td>11,706</td><td>—</td><td>11,706</td><td>12,219</td><td><span class="pill pill-blue">Indefinida</span></td></tr>
+        <tr><td>Otros vida indefinida</td><td>1,540</td><td>—</td><td>1,540</td><td>1,550</td><td><span class="pill pill-blue">Indefinida</span></td></tr>
+        <tr class="tot"><td>Subtotal vida indefinida</td><td>133,555</td><td>—</td><td>133,555</td><td>135,002</td><td>—</td></tr>
+        <tr><td>Implementación de sistemas</td><td>18,040</td><td>(varios)</td><td>—</td><td>—</td><td><span class="pill pill-amber">Finita</span></td></tr>
+        <tr><td>Relaciones con clientes</td><td>582</td><td>(varios)</td><td>—</td><td>—</td><td><span class="pill pill-amber">Finita</span></td></tr>
+        <tr><td>Licencias de alcohol</td><td>2,645</td><td>(varios)</td><td>—</td><td>—</td><td><span class="pill pill-amber">Finita</span></td></tr>
+        <tr><td>Otros amortizables</td><td>7,952</td><td>(varios)</td><td>—</td><td>—</td><td><span class="pill pill-amber">Finita</span></td></tr>
+        <tr class="tot"><td>TOTAL INTANGIBLES NETOS</td><td>162,774</td><td>(17,268)</td><td>145,506</td><td>146,336</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">Fuente: Nota 13 — Activos Intangibles — Págs. 51–54. El crédito mercantil y derechos de vida indefinida no se amortizan, sólo se sujetan a prueba de deterioro anual.</div>
+  </div>
+</div>
+
+<!-- DEUDA -->
+<div id="sec-deuda" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Préstamos bancarios CP</div><div class="kpi-value">5,862M</div><div class="kpi-delta neutral">—</div></div>
+    <div class="kpi"><div class="kpi-label">Venc. LP corriente</div><div class="kpi-value">14,812M</div><div class="kpi-delta neutral">—</div></div>
+    <div class="kpi"><div class="kpi-label">Deuda fin. CP total</div><div class="kpi-value">20,674M</div><div class="kpi-delta neutral">—</div></div>
+    <div class="kpi"><div class="kpi-label">Deuda fin. LP</div><div class="kpi-value">126,992M</div><div class="kpi-delta neutral">—</div></div>
+    <div class="kpi"><div class="kpi-label">Deuda fin. total</div><div class="kpi-value">147,666M</div><div class="kpi-delta neutral">Deuda/Flujo op: 2.08×</div></div>
+    <div class="kpi"><div class="kpi-label">Arrend. CP (NIIF 16)</div><div class="kpi-value">15,188M</div><div class="kpi-delta neutral">—</div></div>
+    <div class="kpi"><div class="kpi-label">Arrend. LP (NIIF 16)</div><div class="kpi-value">94,703M</div><div class="kpi-delta neutral">—</div></div>
+    <div class="kpi"><div class="kpi-label">Total arrend.</div><div class="kpi-value">109,891M</div><div class="kpi-delta neutral">—</div></div>
+    <div class="kpi"><div class="kpi-label">G. intereses deuda</div><div class="kpi-value">8,712M</div><div class="kpi-delta neutral">—</div></div>
+    <div class="kpi"><div class="kpi-label">G. intereses arrend.</div><div class="kpi-value">8,270M</div><div class="kpi-delta neutral">—</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Estructura de vencimientos de deuda (Ps. millones)</div>
+      <div class="chart-wrap" style="height:230px"><canvas id="c-deuda" role="img" aria-label="Vencimientos deuda FEMSA"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Deuda vs arrendamientos 2025 (composición)</div>
+      <div class="leg"><span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Préstamos</span><span class="leg-item"><span class="leg-dot" style="background:#BA7517"></span>Arrendamientos</span></div>
+      <div class="chart-wrap" style="height:200px"><canvas id="c-deuda2" role="img" aria-label="Deuda vs arrendamientos"></canvas></div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--text2)">Arrendamientos NIIF 16 (flujos no descontados al 2024): <strong>Ps.157,949M</strong></div>
+      <div style="font-size:11px;color:var(--text2);margin-top:3px">Plazo prom. tiendas OXXO: <strong>15 años</strong> · Tasa incr. prom.: <strong>10.22%</strong></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Principales emisiones de deuda en mercados internacionales</div>
+    <div class="tw"><table>
+      <thead><tr><th>Instrumento</th><th>Monto</th><th>Tasa</th><th>Vencimiento</th></tr></thead>
+      <tbody>
+        <tr><td>Certificados bursátiles USD (FEMSA)</td><td>U.S.$1,800M</td><td>3.500%</td><td>2050</td></tr>
+        <tr><td>Bonos canjeables EUR (FWB Frankfurt)</td><td>€500M</td><td>2.625%</td><td>2026</td></tr>
+        <tr><td>Certificados bursátiles EUR (Valora)</td><td>€500M</td><td>1.0%</td><td>2033</td></tr>
+        <tr><td>Certificados bursátiles EUR (Valora)</td><td>€700M</td><td>0.5%</td><td>2028</td></tr>
+        <tr><td>Crédito bursátil USD (CC FEMSA)</td><td>U.S.$1,041M</td><td>2.75%</td><td>2030</td></tr>
+        <tr><td>Crédito bursátil USD (CC FEMSA)</td><td>U.S.$705M</td><td>1.85%</td><td>2032</td></tr>
+        <tr><td>Crédito bursátil USD (CC FEMSA)</td><td>U.S.$489M</td><td>5.25%</td><td>2043</td></tr>
+        <tr><td>Crédito bursátil USD (CC FEMSA)</td><td>U.S.$500M</td><td>5.10%</td><td>LP</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">Fuente: Nota 19 — Préstamos bancarios y documentos por pagar — Págs. 70–72</div>
+  </div>
+</div>
+
+<!-- MÁRGENES -->
+<div id="sec-margenes" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Margen bruto</div><div class="kpi-value">40.9%</div><div class="kpi-delta up">▲ vs 41.4% (2024)</div></div>
+    <div class="kpi"><div class="kpi-label">Margen antes imp.</div><div class="kpi-value">6.33%</div><div class="kpi-delta down">▼ vs 8.5% (2024)</div></div>
+    <div class="kpi"><div class="kpi-label">Margen neto</div><div class="kpi-value">3.96%</div><div class="kpi-delta down">▼ vs 5.15% (2024)</div></div>
+    <div class="kpi"><div class="kpi-label">Razón corriente</div><div class="kpi-value">1.35×</div><div class="kpi-delta up">Adecuada</div></div>
+    <div class="kpi"><div class="kpi-label">Pasivo / Activo</div><div class="kpi-value">58.6%</div><div class="kpi-delta down">Apalancado</div></div>
+    <div class="kpi"><div class="kpi-label">Deuda / Flujo op.</div><div class="kpi-value">2.08×</div><div class="kpi-delta neutral">Manejable</div></div>
+    <div class="kpi"><div class="kpi-label">ROA</div><div class="kpi-value">4.15%</div><div class="kpi-delta down">▼ vs 4.73%</div></div>
+    <div class="kpi"><div class="kpi-label">ROE</div><div class="kpi-value">10.05%</div><div class="kpi-delta down">▼ vs 10.56%</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Evolución de márgenes 2023–2025 (%)</div>
+      <div class="leg"><span class="leg-item"><span class="leg-dot" style="background:#378ADD"></span>Margen bruto</span><span class="leg-item"><span class="leg-dot" style="background:#1D9E75"></span>Margen a. imp.</span><span class="leg-item"><span class="leg-dot" style="background:#E24B4A"></span>Margen neto</span></div>
+      <div class="chart-wrap" style="height:240px"><canvas id="c-margenes" role="img" aria-label="Evolución márgenes 2023 a 2025"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Ratios clave</div>
+      <div class="sub">Liquidez</div>
+      <div class="pr"><div class="pl"><span>Razón corriente</span><span>1.35× <span class="pill pill-green">Adecuada</span></span></div><div class="pt"><div class="pf" style="width:67%;background:#1D9E75"></div></div></div>
+      <div class="sub">Apalancamiento</div>
+      <div class="pr"><div class="pl"><span>Pasivo / Activo</span><span>58.6% <span class="pill pill-amber">Significativo</span></span></div><div class="pt"><div class="pf" style="width:58.6%;background:#BA7517"></div></div></div>
+      <div class="pr"><div class="pl"><span>Capital / Activo</span><span>41.4% <span class="pill pill-blue">Moderado</span></span></div><div class="pt"><div class="pf" style="width:41.4%;background:#378ADD"></div></div></div>
+      <div class="sub">Cobertura y retorno</div>
+      <div class="pr"><div class="pl"><span>Deuda fin. / Flujo op.</span><span>2.08× <span class="pill pill-green">Manejable</span></span></div><div class="pt"><div class="pf" style="width:50%;background:#534AB7"></div></div></div>
+      <div class="pr"><div class="pl"><span>Payout (div/flujo op)</span><span>70.2% <span class="pill pill-amber">Agresivo</span></span></div><div class="pt"><div class="pf" style="width:70.2%;background:#E24B4A"></div></div></div>
+      <div class="pr"><div class="pl"><span>ROE 2025</span><span>10.05% <span class="pill pill-blue">Aceptable</span></span></div><div class="pt"><div class="pf" style="width:40%;background:#378ADD"></div></div></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Tabla completa de ratios financieros</div>
+    <div class="tw"><table>
+      <thead><tr><th>Ratio</th><th>Fórmula</th><th>2025</th><th>2024</th><th>Interpretación</th></tr></thead>
+      <tbody>
+        <tr><td>Margen bruto</td><td>U.Bruta / Ventas</td><td>40.9%</td><td>41.4%</td><td><span class="pill pill-green">Sólido</span></td></tr>
+        <tr><td>Margen antes impuestos</td><td>UAI / Ventas</td><td>6.33%</td><td>8.58%</td><td><span class="pill pill-amber">En caída</span></td></tr>
+        <tr><td>Margen neto</td><td>U.Neta / Ventas</td><td>3.96%</td><td>5.19%</td><td><span class="pill pill-amber">Presión</span></td></tr>
+        <tr><td>Tasa efectiva ISR</td><td>ISR / UAI</td><td>37.6%</td><td>38.2%</td><td><span class="pill pill-amber">Alta</span></td></tr>
+        <tr><td>Razón corriente</td><td>AC / PC</td><td>1.35×</td><td>1.69×</td><td><span class="pill pill-green">Adecuada</span></td></tr>
+        <tr><td>Pasivo / Activo</td><td>PT / AT</td><td>58.6%</td><td>55.2%</td><td><span class="pill pill-amber">Apalancado</span></td></tr>
+        <tr><td>Capital / Activo</td><td>CT / AT</td><td>41.4%</td><td>44.8%</td><td><span class="pill pill-blue">Moderado</span></td></tr>
+        <tr><td>Deuda fin. / Flujo op.</td><td>DF / CFO</td><td>2.08×</td><td>2.08×</td><td><span class="pill pill-green">Estable</span></td></tr>
+        <tr><td>Payout (divid / flujo op)</td><td>Div / CFO</td><td>70.2%</td><td>35.1%</td><td><span class="pill pill-red">Agresivo</span></td></tr>
+        <tr><td>ROA</td><td>U.Neta / AT</td><td>4.15%</td><td>4.73%</td><td><span class="pill pill-amber">En caída</span></td></tr>
+        <tr><td>ROE</td><td>U.Neta / CT</td><td>10.05%</td><td>10.56%</td><td><span class="pill pill-blue">Aceptable</span></td></tr>
+        <tr><td>Depreciación / Capex</td><td>D&amp;A / Capex</td><td>1.15×</td><td>0.90×</td><td><span class="pill pill-green">Por encima</span></td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- CAPITAL -->
+<div id="sec-capital" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Capital inicio 2025</div><div class="kpi-value">381,131M</div><div class="kpi-delta neutral">Saldo enero 2025</div></div>
+    <div class="kpi"><div class="kpi-label">Utilidad integral</div><div class="kpi-value">19,945M</div><div class="kpi-delta neutral">Consolidada</div></div>
+    <div class="kpi"><div class="kpi-label">Dividendos FEMSA</div><div class="kpi-value">Ps.14,817M</div><div class="kpi-delta down">Decretados 2025</div></div>
+    <div class="kpi"><div class="kpi-label">Dividendos CC FEMSA</div><div class="kpi-value">Ps.15,462M</div><div class="kpi-delta down">100% del dividendo</div></div>
+    <div class="kpi"><div class="kpi-label">Pagados en 2025</div><div class="kpi-value">56,284M</div><div class="kpi-delta down">Totales + CC FEMSA</div></div>
+    <div class="kpi"><div class="kpi-label">Recompra acciones</div><div class="kpi-value">12,364M</div><div class="kpi-delta down">Efectivo pagado</div></div>
+    <div class="kpi"><div class="kpi-label">Acciones en circ.</div><div class="kpi-value">17,347M</div><div class="kpi-delta down">vs 17,891M en 2024</div></div>
+    <div class="kpi"><div class="kpi-label">Capital fin 2025</div><div class="kpi-value">329,352M</div><div class="kpi-delta down">▼ −51,779M</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Puente de capital contable 2024–2025 (Ps. millones)</div>
+      <div class="chart-wrap" style="height:240px"><canvas id="c-capital" role="img" aria-label="Puente de capital FEMSA 2025"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Composición del capital contable 2025</div>
+      <div class="tw"><table>
+        <thead><tr><th>Concepto</th><th>2025</th><th>2024</th></tr></thead>
+        <tbody>
+          <tr><td>Capital social</td><td>3,221</td><td>3,261</td></tr>
+          <tr><td>Prima en suscripción de acciones</td><td>(17,413)</td><td>(2,586)</td></tr>
+          <tr><td>Utilidades retenidas</td><td>278,825</td><td>306,400</td></tr>
+          <tr><td>Valuación inst. financieros capital</td><td>(622)</td><td>(622)</td></tr>
+          <tr><td>Valuación instrumentos derivados</td><td>187</td><td>1,994</td></tr>
+          <tr><td>Efecto conversión extranjero</td><td>(18,009)</td><td>(9,864)</td></tr>
+          <tr><td>Remediciones beneficios definidos</td><td>(1,181)</td><td>(1,081)</td></tr>
+          <tr class="tot"><td>Capital a controladora</td><td>244,982</td><td>297,502</td></tr>
+          <tr><td>Participación no controladora</td><td>84,370</td><td>83,629</td></tr>
+          <tr class="tot"><td>Capital total</td><td>329,352</td><td>381,131</td></tr>
+        </tbody>
+      </table></div>
+      <div class="note">Fuente: Estado de Variaciones en Capital — Pág. 12 y Nota 23</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Historial de dividendos declarados por FEMSA y Coca-Cola FEMSA (Ps. millones)</div>
+    <div class="tw"><table>
+      <thead><tr><th>Año</th><th>Dividendos FEMSA</th><th>CC FEMSA (100%)</th><th>Total decretado</th><th>Pagado en efectivo</th></tr></thead>
+      <tbody>
+        <tr><td>2023</td><td>12,247</td><td>12,185</td><td>24,432</td><td>18,798</td></tr>
+        <tr><td>2024</td><td>14,697 + 10,294 ext.</td><td>12,773</td><td>37,764</td><td>25,080</td></tr>
+        <tr class="tot"><td>2025</td><td>14,817 (ordinario)</td><td>15,462</td><td>56,284</td><td>49,925</td></tr>
+      </tbody>
+    </table></div>
+    <div class="note">Nota: En 2025 FEMSA pagó el 25% residual de 2024 (aprobado en marzo 2024) más los cuatro pagos del dividendo 2025. Fuente: Nota 22–23</div>
+  </div>
+</div>
+
+<!-- RIESGOS -->
+<div id="sec-riesgos" class="section">
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-label">Intangibles en prueba</div><div class="kpi-value">133,555M</div><div class="kpi-delta down">Vida indefinida</div></div>
+    <div class="kpi"><div class="kpi-label">Contingencias posibles</div><div class="kpi-value">~190,305M</div><div class="kpi-delta down">Principalmente fiscal</div></div>
+    <div class="kpi"><div class="kpi-label">Contingencias Brasil</div><div class="kpi-value">Ps.20,054M</div><div class="kpi-delta down">Garantizadas</div></div>
+    <div class="kpi"><div class="kpi-label">Provisiones</div><div class="kpi-value">3,322M</div><div class="kpi-delta neutral">↓ vs 3,875M</div></div>
+    <div class="kpi"><div class="kpi-label">Exposición cambiaria</div><div class="kpi-value">Múltiple</div><div class="kpi-delta down">14 países distintos</div></div>
+    <div class="kpi"><div class="kpi-label">Controles TI (EY)</div><div class="kpi-value">Deficientes</div><div class="kpi-delta down">Asunto clave #2</div></div>
+  </div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-title">Mapa de riesgos — impacto en estados financieros</div>
+      <div class="risk-card">
+        <div class="risk-title">Riesgo 1 — Deterioro de activos intangibles (EY, Asunto Clave Auditoría #1)</div>
+        <div class="risk-body">Afecta: Activo no circulante · Resultados · Patrimonio. Crédito mercantil Ps.46,102M + Derechos Coca-Cola Ps.74,207M = Ps.120,309M sin amortizar. Colombia: WACC +1.2pp y volumen −1% aún pasa prueba. Argentina con WACC 16.8% la más sensible.</div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-title">Riesgo 2 — Controles TI deficientes (EY, Asunto Clave Auditoría #2)</div>
+        <div class="risk-body">Afecta: Confiabilidad de todos los EF. Deficiencias en control de acceso y administración de cambios → riesgo de error en reporte financiero. Provocó procedimientos adicionales de auditoría en EY.</div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-title">Riesgo 3 — Contingencias fiscales Brasil y México (~Ps.121,720M)</div>
+        <div class="risk-body">Afecta: Provisiones y ORI. Coca-Cola FEMSA garantiza Ps.20,054M ante autoridades brasileñas. Contingencias fiscales totales "posibles" suman ~Ps.190,305M aunque la administración no las considera de impacto material.</div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-title">Riesgo 4 — Payout agresivo + apalancamiento</div>
+        <div class="risk-body">Dividendos 2025 pagados Ps.49,925M + recompras Ps.12,364M = Ps.62,289M frente a flujo operativo de Ps.71,080M. El patrimonio cayó Ps.51,779M. Si el flujo operativo se reduce, la política de dividendos se vuelve insostenible sin nueva deuda.</div>
+      </div>
+      <div class="risk-card">
+        <div class="risk-title">Riesgo 5 — Exposición cambiaria multidivisa</div>
+        <div class="risk-body">Valora en CHF/EUR; CC FEMSA en BRL, COP, ARS (hiperinflacionario). El ORI negativo de Ps.(19,651)M refleja impacto de conversión. Argentina con inflación acumulada 792% (2023–2025) genera alta volatilidad.</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Radar de riesgos</div>
+      <div class="chart-wrap" style="height:280px"><canvas id="c-radar" role="img" aria-label="Radar de riesgos FEMSA 2025"></canvas></div>
+      <div class="divider"></div>
+      <div style="font-size:11px;color:var(--text2)">Escala 0–10 · Valoración basada en EF oficiales e informe EY</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end .content -->
+<footer>FEMSA 2025 — Dashboard financiero interactivo · Información extraída de los Estados Financieros Consolidados Oficiales (105 págs.) · Cifras en Ps. millones · Preparado bajo NIIF</footer>
+
+<script>
+const C={
+  blue:'#378ADD',blueLt:'#B5D4F4',
+  green:'#3B6D11',greenLt:'#97C459',
+  red:'#E24B4A',redLt:'#F09595',
+  amber:'#BA7517',amberLt:'#EF9F27',
+  teal:'#1D9E75',tealLt:'#5DCAA5',
+  purple:'#534AB7',purpleLt:'#AFA9EC',
+  gray:'#888780'
+};
+const fmt=v=>new Intl.NumberFormat('es-MX').format(Math.round(v));
+const gColor='rgba(0,0,0,.07)';
+const tColor='#888780';
+
+function show(id,btn){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+id).classList.add('active');
+  btn.classList.add('active');
+  setTimeout(initCharts,60);
+}
+function dlHTML(){
+  const h='<!DOCTYPE html>'+document.documentElement.outerHTML;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([h],{type:'text/html'}));
+  a.download='FEMSA_2025_Dashboard_Oficial.html';a.click();
+}
+
+const baseOpts={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' Ps. '+fmt(ctx.parsed.y??ctx.parsed)+'M'}}},
+  scales:{x:{grid:{color:gColor},ticks:{color:tColor}},y:{grid:{color:gColor},ticks:{color:tColor,callback:v=>fmt(v)}}}
+};
+const lineOpts={
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y.toFixed(2)+'%'}}},
+  scales:{x:{grid:{color:gColor},ticks:{color:tColor}},y:{grid:{color:gColor},ticks:{color:tColor,callback:v=>v+'%'}}}
+};
+
+let done=false;
+function initCharts(){
+  if(done)return;done=true;
+  Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif";
+  Chart.defaults.font.size=11;Chart.defaults.color=tColor;
+
+  new Chart(document.getElementById('c-overview'),{type:'bar',
+    data:{labels:['2023','2024','2025'],datasets:[
+      {label:'Ingresos',data:[702692,781585,840954],backgroundColor:C.blue},
+      {label:'U. bruta',data:[279507,321513,341576],backgroundColor:C.teal},
+      {label:'U. neta',data:[76677,40236,33053],backgroundColor:C.red}
+    ]},options:{...baseOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': Ps.'+fmt(ctx.parsed.y)+'M'}}}}
+  });
+
+  new Chart(document.getElementById('c-estructura'),{type:'doughnut',
+    data:{labels:['Pasivo','Capital'],datasets:[{data:[466525,329352],backgroundColor:[C.red,C.teal],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' '+fmt(ctx.parsed)+'M ('+((ctx.parsed/795877)*100).toFixed(1)+'%)'}}}}
+  });
+
+  new Chart(document.getElementById('c-resultados'),{type:'bar',
+    data:{labels:['Ingresos','U. Bruta','UAI','U. Neta'],datasets:[
+      {label:'2023',data:[702692,279507,57816,76677],backgroundColor:C.blue},
+      {label:'2024',data:[781585,321513,66547,40236],backgroundColor:C.teal},
+      {label:'2025',data:[840954,341576,52837,33053],backgroundColor:C.purple}
+    ]},options:{...baseOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': Ps.'+fmt(ctx.parsed.y)+'M'}}}}
+  });
+
+  const wfData=[
+    {label:'Ingresos totales',val:840954,pct:100,color:C.blue},
+    {label:'− Costo de ventas',val:-499378,pct:-59.4,color:C.red},
+    {label:'= Utilidad bruta',val:341576,pct:40.6,color:C.teal},
+    {label:'− G. administración',val:-39325,pct:-4.7,color:C.amber},
+    {label:'− G. ventas',val:-229324,pct:-27.3,color:C.amberLt||'#EF9F27'},
+    {label:'+ Otros netos',val:-2816,pct:-0.3,color:C.gray},
+    {label:'= U. antes impuestos',val:52837,pct:6.3,color:C.teal},
+    {label:'− Impuestos',val:-19860,pct:-2.4,color:C.red},
+    {label:'= U. neta',val:33053,pct:3.9,color:C.green}
+  ];
+  document.getElementById('wfContainer').innerHTML=wfData.map(d=>`
+    <div class="wf-row">
+      <div class="wf-label">${d.label}</div>
+      <div class="wf-track"><div class="wf-fill" style="width:${Math.min(Math.abs(d.pct),100)}%;background:${d.color}">${d.pct>0?'+':''}${d.pct.toFixed(1)}%</div></div>
+      <div class="wf-val" style="color:${d.val<0?C.red:C.green}">${d.val<0?'('+fmt(Math.abs(d.val))+')':fmt(d.val)}</div>
+    </div>`).join('');
+
+  new Chart(document.getElementById('c-activo'),{type:'bar',
+    data:{labels:['Efectivo','Inversiones','Clientes','Inventarios','Imp.Recup.','Otros circ.','Inv.MEP','PP&E','Uso (NIIF16)','Intangibles','ImpDif.Rec.','Otros NC'],
+    datasets:[{data:[107980,20042,48319,69452,30215,7108,25726,189672,99543,145506,31014,21300],
+    backgroundColor:[C.teal,C.tealLt,C.tealLt,C.tealLt,C.tealLt,C.tealLt,C.blue,C.blue,C.purple,C.purple,C.blueLt,C.blueLt]}]},
+    options:{...baseOpts,indexAxis:'y',scales:{y:{grid:{display:false},ticks:{color:tColor}},x:{grid:{color:gColor},ticks:{color:tColor,callback:v=>fmt(v)}}}}
+  });
+
+  new Chart(document.getElementById('c-balance'),{type:'bar',
+    data:{labels:['Activo\n2024','Activo\n2025','Pasivo\n2024','Pasivo\n2025','Capital\n2024','Capital\n2025'],
+    datasets:[{data:[851536,795877,470405,466525,381131,329352],backgroundColor:[C.blueLt,C.blue,C.redLt||'#F09595',C.red,C.tealLt,C.teal]}]},
+    options:{...baseOpts}
+  });
+
+  new Chart(document.getElementById('c-flujo'),{type:'line',
+    data:{labels:['2023','2024','2025'],datasets:[
+      {label:'Flujo operativo',data:[49679,71510,71080],borderColor:C.green,backgroundColor:C.green+'22',tension:.3,fill:true,pointRadius:5},
+      {label:'Dividendos pagados',data:[18798,25080,49925],borderColor:C.red,backgroundColor:C.red+'22',tension:.3,fill:true,borderDash:[4,4],pointRadius:5}
+    ]},options:{...baseOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': Ps.'+fmt(ctx.parsed.y)+'M'}}}}
+  });
+
+  new Chart(document.getElementById('c-puente'),{type:'bar',
+    data:{labels:['Efectivo inicial','+ Operativo','+ Inversión','+ Financiamiento','Efectivo final'],
+    datasets:[{data:[139834,71080,-2061,-92000,107980],backgroundColor:[C.blue,C.green,C.amber,C.red,C.teal]}]},
+    options:{...baseOpts}
+  });
+
+  new Chart(document.getElementById('c-seg'),{type:'bar',
+    data:{labels:['CC FEMSA','Prox. Américas','Salud','Combustibles','Prox. Europa','Otros'],
+    datasets:[{data:[291746,328839,88129,67195,57028,29128],backgroundColor:[C.blue,C.green,C.purple,C.amber,C.teal,C.gray]}]},
+    options:{...baseOpts,indexAxis:'y',scales:{y:{grid:{display:false},ticks:{color:tColor}},x:{grid:{color:gColor},ticks:{color:tColor,callback:v=>fmt(v)}}}}
+  });
+
+  new Chart(document.getElementById('c-seg-ut'),{type:'bar',
+    data:{labels:['CC FEMSA','Prox. Américas','Combustibles','Prox. Europa','Salud','Otros (neg.)'],
+    datasets:[{data:[37158,14171,1222,1723,642,-2079],backgroundColor:[C.green,C.blue,C.amber,C.teal,C.purple,C.red]}]},
+    options:{...baseOpts,indexAxis:'y',scales:{y:{grid:{display:false},ticks:{color:tColor}},x:{grid:{color:gColor},ticks:{color:tColor,callback:v=>fmt(v)}}}}
+  });
+
+  new Chart(document.getElementById('c-intang'),{type:'doughnut',
+    data:{labels:['D. Coca-Cola','Goodwill','D. marca','Otros indef.','Amortizables'],
+    datasets:[{data:[74207,46102,11706,1540,11951],backgroundColor:[C.blue,C.purple,C.teal,C.amber,C.gray],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'50%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' Ps.'+fmt(ctx.parsed)+'M'}}}}
+  });
+
+  new Chart(document.getElementById('c-deuda'),{type:'bar',
+    data:{labels:['2026','2027','2028','2029','2030','2031+'],
+    datasets:[
+      {label:'Documentos/bonos',data:[13473,9324,16141,5494,18576,74511],backgroundColor:C.red},
+      {label:'Préstamos bancarios',data:[7201,2428,319,162,37,0],backgroundColor:C.amber}
+    ]},options:{...baseOpts,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': Ps.'+fmt(ctx.parsed.y)+'M'}}},scales:{x:{stacked:true,grid:{color:gColor},ticks:{color:tColor}},y:{stacked:true,grid:{color:gColor},ticks:{color:tColor,callback:v=>fmt(v)}}}}
+  });
+
+  new Chart(document.getElementById('c-deuda2'),{type:'doughnut',
+    data:{labels:['Préstamos CP','Préstamos LP','Arrend. CP','Arrend. LP'],
+    datasets:[{data:[20674,126992,15188,94703],backgroundColor:[C.red,C.redLt||'#F09595',C.amber,C.amberLt||'#EF9F27'],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>' Ps.'+fmt(ctx.parsed)+'M'}}}}
+  });
+
+  new Chart(document.getElementById('c-margenes'),{type:'line',
+    data:{labels:['2023','2024','2025'],datasets:[
+      {label:'Margen bruto',data:[39.8,41.4,40.9],borderColor:C.blue,tension:.3,pointRadius:5},
+      {label:'Margen a. imp.',data:[8.2,8.5,6.3],borderColor:C.teal,tension:.3,pointRadius:5},
+      {label:'Margen neto',data:[10.9,5.2,4.0],borderColor:C.red,tension:.3,pointRadius:5}
+    ]},options:lineOpts
+  });
+
+  new Chart(document.getElementById('c-capital'),{type:'bar',
+    data:{labels:['Capital 2024','+ U. integral','− Dividendos','− Recompras','− OPUIA otros','Capital 2025'],
+    datasets:[{data:[381131,19945,-56284,-12364,-3076,329352],backgroundColor:[C.blue,C.green,C.red,C.amber,C.purple,C.teal]}]},
+    options:{...baseOpts}
+  });
+
+  new Chart(document.getElementById('c-radar'),{type:'radar',
+    data:{labels:['Deterioro\nintangibles','Controles\nde TI','Contingencias\nfiscales','Exposición\ncambiaria','Payout\nagresivo','Vencim.\ndeuda'],
+    datasets:[{label:'Riesgo 2025',data:[8,7,8,7,8,5],borderColor:C.red,backgroundColor:C.red+'30',pointBackgroundColor:C.red,pointRadius:5}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{r:{min:0,max:10,ticks:{stepSize:2,color:tColor},grid:{color:gColor},pointLabels:{color:tColor,font:{size:10}}}}}
+  });
+}
+setTimeout(initCharts,100);
+
+// AI SYSTEM
+const CTX=`Eres un analista financiero senior con acceso completo a los Estados Financieros Consolidados Oficiales de FEMSA 2025 (105 páginas, bajo NIIF). Responde en español. Aquí están todos los datos reales del PDF:
+
+ESTADO DE RESULTADOS CONSOLIDADO 2025 (Ps. millones):
+- Ventas netas: 834,390 (2024: 775,551 | 2023: 699,640)
+- Otros ingresos de operación: 6,564 (2024: 6,034 | 2023: 3,052)
+- Ingresos totales: 840,954 (2024: 781,585 | 2023: 702,692)
+- Costo de ventas: 499,378 (2024: 460,072 | 2023: 423,185)
+- Utilidad bruta: 341,576 (2024: 321,513 | 2023: 279,507) → Margen bruto 40.9%
+- Gastos de administración: 39,325 (2024: 39,085 | 2023: 32,307)
+- Gastos de ventas: 229,324 (2024: 211,966 | 2023: 188,732)
+- Otros ingresos: 3,317 (2024: 3,588 | 2023: 13,102)
+- Otros gastos: 6,133 (2024: 9,440 | 2023: 6,252)
+- Gasto financiero: 21,303 (2024: 20,002 | 2023: 14,916)
+- Producto financiero: 7,662 (2024: 11,910 | 2023: 17,609)
+- Pérdida (ganancia) fluctuación cambiaria: 5,747 (2024: (11,929) | 2023: 9,849)
+- Ganancia posición monetaria hiperinflacionarios: (385) 
+- Ganancia en valuación instrumentos financieros: (1,729)
+- Utilidad antes de impuestos (operaciones continuas): 52,837 (2024: 66,547 | 2023: 57,816)
+- Impuesto a la utilidad: 19,860 (2024: 25,433 | 2023: 12,971) — Tasa efectiva ~37.6%
+- Participación en pérdidas de asociadas: (1,498)
+- Utilidad neta operaciones continuas: 31,479
+- Utilidad neta operaciones discontinuas: 1,574 (2024: 115 | 2023: 32,238)
+- UTILIDAD NETA CONSOLIDADA: 33,053 (2024: 40,236 | 2023: 76,677) — Cayó 17.9%
+- Atribuible a controladora: 19,431 (2024: 26,735 | 2023: 65,689) — Cayó 27.3%
+- Atribuible a no controladora: 13,622
+- UPA Serie B básica: Ps.0.91 (2024: 1.34 | 2023: 1.67)
+- UPA Serie D básica: Ps.1.25 (2024: 1.70 | 2023: 2.09)
+
+BALANCE GENERAL al 31 dic 2025 (Ps. millones):
+ACTIVOS CIRCULANTES:
+- Efectivo y equivalentes: 107,980 (2024: 139,834)
+- Inversiones CP: 20,042 (2024: 43,212)
+- Clientes neto: 48,319 (2024: 43,192)  [bruto 51,746 menos reserva 3,427]
+- Inventarios: 69,452 (2024: 67,464)
+- Impuestos por recuperar: 30,215 (2024: 26,190)
+- Otros activos financieros circ.: 1,120 (2024: 1,782)
+- Otros activos circulantes: 5,988 (2024: 6,242)
+- TOTAL CIRCULANTE: 283,116 (2024: 342,311) ← cayó por desinversiones
+ACTIVOS NO CIRCULANTES:
+- Inversiones método participación (MEP): 25,726 [IFS TopCo 14,192, PIASA 3,871, Jugos del Valle 3,793, Fountain 962, Planta Tabasco 1,247, otros]
+- Propiedad planta y equipo neto: 189,672 (2024: 177,511)
+- Derecho de uso NIIF 16: 99,543 (2024: 97,960)
+- Activos intangibles neto: 145,506 (2024: 146,336)
+- Impuestos diferidos por recuperar: 31,014 (2024: 26,912)
+- Otros activos financieros NC: 13,454 (2024: 23,280)
+- Otros activos NC: 7,846 (2024: 8,529)
+- TOTAL NO CIRCULANTE: 512,761 (2024: 509,225)
+- ACTIVO TOTAL: 795,877 (2024: 851,536)
+
+PASIVOS CIRCULANTES:
+- Préstamos bancarios CP: 5,862 (2024: 3,775)
+- Vencimiento LP corriente: 14,812 (2024: 2,947) ← gran aumento
+- Pasivo arrendamiento CP: 15,188 (2024: 13,796)
+- Intereses por pagar: 1,790 (2024: 1,802)
+- Proveedores: 93,688 (2024: 96,912)
+- Cuentas por pagar: 29,913 (2024: 32,370)
+- Impuestos por pagar: 4,647 (2024: 7,207)
+- Otros pasivos financieros circ.: 44,114 (2024: 37,169)
+- TOTAL CIRCULANTE: 210,014 (2024: 202,930)
+PASIVOS NO CIRCULANTES:
+- Préstamos bancarios LP: 126,992 (2024: 141,482)
+- Pasivo arrendamiento LP: 94,703 (2024: 94,299)
+- Beneficios post-empleo: 10,719 (2024: 8,968)
+- Impuestos diferidos por pagar: 8,284 (2024: 8,693)
+- Otros pasivos financieros NC: 8,982 (2024: 6,759)
+- Provisiones: 3,322 (2024: 3,875)
+- Otros pasivos NC: 3,509 (2024: 3,399)
+- TOTAL NO CIRCULANTE: 256,511 (2024: 267,475)
+- TOTAL PASIVO: 466,525 (2024: 470,405) — 58.6% del activo
+CAPITAL CONTABLE:
+- Capital social: 3,221 (2024: 3,261)
+- Prima en suscripción: (17,413) (2024: (2,586)) ← recompras
+- Utilidades retenidas: 278,825 (2024: 306,400) ← cayó por dividendos
+- OPUIA acumuladas: (19,651) (2024: (9,573)) ← efecto cambiario
+- Capital a controladora: 244,982 (2024: 297,502)
+- Participación no controladora: 84,370 (2024: 83,629) [CC FEMSA: 84,426]
+- TOTAL CAPITAL: 329,352 (2024: 381,131) — cayó Ps.51,779M
+
+FLUJO DE EFECTIVO 2025 (Ps. millones):
+OPERACIÓN: Flujo neto generado: +71,080 (2024: +71,510 | 2023: +49,679)
+- Depreciación y amortización: 40,291 PP&E + 3,847 intangibles
+- Impuestos pagados: (27,074)
+- Capital de trabajo: negativo por (25,528)
+INVERSIÓN: Flujo neto: −2,061 (2024: −33,122 | 2023: +132,292)
+- Ingreso venta Heineken: +7,598
+- Ingreso venta PTM: +2,747 (vendida a AMMI/Milenio Capital, ene 2025)
+- Ingreso venta Solistica: +4,042 (vendida a Grupo Traxión, jul 2025)
+- Ingreso vencimiento inversiones: +18,255
+- Intereses cobrados: +7,467
+- Adquisición PP&E: (38,502)
+- Adquisición intangibles: (3,545)
+FINANCIAMIENTO: Flujo neto: −92,000 (2024: −84,049 | 2023: −82,054)
+- Dividendos pagados efectivo: (49,925)
+- Recompra de acciones: (12,364)
+- Pagos arrendamientos principal: (15,791)
+- Intereses arrendamientos: (8,270)
+- Intereses deuda: (8,787)
+- Nuevos préstamos: +11,333
+- Pagos préstamos: (1,817)
+EFECTIVO: Inicio 139,834 → Final 107,980 (variación: −22,981, −16.4%)
+
+INTANGIBLES (Nota 13, Pág. 51-54):
+- Derechos distribución Coca-Cola: Ps.74,207M (vida indefinida, no se amortizan)
+- Crédito mercantil (goodwill): Ps.46,102M (no se amortiza, prueba anual deterioro)
+- Derecho de marca: Ps.11,706M (indefinida)
+- Otros vida indefinida: Ps.1,540M
+- Amortizables: Ps.11,951M neto (sistemas, relaciones clientes, licencias)
+- Amortización 2025: Ps.2,567M (costo ventas 175, admin 1,067, ventas 1,325)
+- TOTAL NETO: Ps.145,506M (18.3% del activo total)
+- Prueba de deterioro: Sin deterioro en 2025; en 2023 hubo deterioro de goodwill de Ps.4,995M
+
+DEUDA FINANCIERA (Nota 19, Págs. 70-72):
+- Total deuda financiera: Ps.147,666M (2024: 148,204M)
+- CP: Ps.20,674M (bancarios 5,862 + vencimientos LP 14,812)
+- LP: Ps.126,992M
+- Arrendamientos NIIF 16 total: Ps.109,891M (CP 15,188 + LP 94,703)
+- Tasa promedio ponderada arrendamientos: 10.22%
+- Plazo promedio tiendas OXXO: 15 años
+- Flujos arrendamientos no descontados (2024): Ps.157,949M
+- Vencimientos deuda: 2026=20,674, 2027=11,752, 2028=16,460, 2029=5,656, 2030=18,613, 2031+=74,511
+- Gasto intereses deuda: Ps.8,712M
+- Gasto intereses arrendamientos: Ps.8,270M
+
+SEGMENTOS 2025 (Nota 27, Pág. 100):
+- Coca-Cola FEMSA: Ingresos 291,746 | UAI 37,158 | Margen UAI 12.7% | Activos 314,539 | Capex 27,059
+- Proximidad Américas (OXXO): Ingresos 328,839 | UAI 14,171 | Margen 4.3% | Activos 239,785 | Capex 13,721
+- División Salud: Ingresos 88,129 | UAI 642 | Margen 0.7% | Activos 74,516 | Capex 1,608
+- División Combustibles: Ingresos 67,195 | UAI 1,222 | Margen 1.8% | Activos 25,867 | Capex 208
+- Proximidad Europa (Valora): Ingresos 57,028 | UAI 1,723 | Margen 3.0% | Activos 44,539 | Capex 1,938
+- Otros: Ingresos 29,128 | UAI (2,079) | Activos 200,530
+
+CAPITAL CONTABLE Y DIVIDENDOS (Nota 22-23):
+- Acciones: 17,347,347,635 al dic 2025 (2024: 17,891,131,350)
+- Unidades BD y B: 2,052,421,027 BD + 1,417,048,500 B
+- Dividendos FEMSA 2025: Ps.14,817M ordinarios (4 pagos de 25% cada uno)
+- Dividendos CC FEMSA 2025: Ps.15,462M (100%)
+- Dividendos totales pagados 2025: Ps.56,284M declarados / Ps.49,925M efectivo 2025
+- Recompra acciones: Ps.12,364M efectivo pagado
+- Utilidad integral consolidada: Ps.19,945M (controladora: 9,353M)
+- OPUI negativa: (13,108)M [conversión extranjera (8,668), cobertura (2,556), remediciones (1,457)]
+- Puente capital: 381,131 + 19,945 − 56,284 − 12,364 − 3,076 = 329,352M
+
+RIESGOS (EY + Notas):
+1. Asunto clave EY #1: Deterioro intangibles vida indefinida Coca-Cola FEMSA Colombia. Sin deterioro en 2025, pero es el riesgo más señalado.
+2. Asunto clave EY #2: Deficiencias controles acceso y administración cambios en TI. Provocó procedimientos adicionales de auditoría.
+3. Contingencias fiscales totales "posibles": ~Ps.190,305M (evaluadas como poco probables de fallo). CC FEMSA garantiza Ps.20,054M en Brasil.
+4. Argentina hiperinflacionaria: inflación acumulada 792.1% (2023-2025). WACC 16.8%.
+5. Payout agresivo: 70.2% del flujo operativo en dividendos (efectivo) + 17.4% recompras = 87.7% total.
+6. Caída patrimonio: −Ps.51,779M en un año, principalmente por dividendos y efecto cambiario en ORI.
+
+RATIOS CALCULADOS:
+- Margen bruto: 40.9% | Margen a. imp.: 6.33% | Margen neto: 3.96%
+- Razón corriente: 1.35× | Pasivo/Activo: 58.6% | Capital/Activo: 41.4%
+- Deuda fin./Flujo op.: 2.08× | ROA: 4.15% | ROE: 10.05%
+- Depreciación/Capex: 1.15× | Tasa efectiva ISR: 37.6%
+
+Responde SIEMPRE:
+1. Párrafo directo de 2-3 oraciones con la respuesta
+2. Lista de 2-4 datos clave: "• Concepto: cifra — interpretación"
+3. Al final, escribe exactamente: "NAVEGAR:[sección]" donde sección es UNA de: Resumen, Resultados, Balance, Flujo, Segmentos, Intangibles, Deuda, Márgenes, Capital, Riesgos`;
+
+const SMAP={'Resumen':'resumen','Resultados':'resultados','Balance':'balance','Flujo':'flujo','Segmentos':'segmentos','Intangibles':'intangibles','Deuda':'deuda','Márgenes':'margenes','Capital':'capital','Riesgos':'riesgos'};
+
+function qAI(q){document.getElementById('aiQ').value=q;runAI();}
+
+async function runAI(){
+  const q=document.getElementById('aiQ').value.trim();
+  if(!q)return;
+  const btn=document.getElementById('aiBtn');
+  btn.disabled=true;btn.textContent='Analizando...';
+  const wrap=document.getElementById('aiWrap');
+  wrap.style.display='block';
+  wrap.innerHTML=`<div class="ai-panel"><div class="ai-head"><div class="ai-head-title">&#128269; "${q}"</div><button class="ai-close" onclick="document.getElementById('aiWrap').style.display='none'">×</button></div><div class="ai-body"><div class="ai-thinking"><div class="dot"></div><div class="dot"></div><div class="dot"></div><span>Consultando EF oficiales FEMSA 2025...</span></div></div></div>`;
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-6',max_tokens:800,system:CTX,messages:[{role:'user',content:q}]})});
+    const d=await r.json();
+    const raw=d.content?.[0]?.text||'Sin respuesta.';
+    const navM=raw.match(/NAVEGAR:([^\n]+)/i);
+    const navSec=navM?navM[1].trim():null;
+    const clean=raw.replace(/NAVEGAR:.+/i,'').trim();
+    const lines=clean.split('\n').filter(l=>l.trim());
+    let out='';
+    for(const line of lines){
+      const t=line.trim();
+      if(t.startsWith('•')||t.startsWith('-')){
+        const c=t.replace(/^[•\-]\s*/,'');
+        const idx=c.indexOf(':');
+        if(idx>0){
+          const label=c.slice(0,idx).trim();
+          const rest=c.slice(idx+1).trim();
+          const vm=rest.match(/[\d,\.]+(%|M|×|x)?/);
+          if(vm){const val=vm[0];const desc=rest.replace(val,'').replace(/^[\s—\-]+/,'').trim();
+            out+=`<div class="hl"><div class="hl-label"><strong>${label}</strong>${desc?' — '+desc:''}</div><div class="hl-val">${val}</div></div>`;
+          }else{out+=`<div class="hl"><div class="hl-label"><strong>${label}</strong>: ${rest}</div></div>`;}
+        }else{out+=`<p style="font-size:12px;color:var(--text2);padding:3px 0">${t}</p>`;}
+      }else if(t){out+=`<p class="ai-answer" style="margin-bottom:7px">${t}</p>`;}
+    }
+    if(navSec&&SMAP[navSec]){
+      const sk=SMAP[navSec];
+      const btns=document.querySelectorAll('.nav-btn');
+      const order=['resumen','resultados','balance','flujo','segmentos','intangibles','deuda','margenes','capital','riesgos'];
+      const idx=order.indexOf(sk);
+      out+=`<button class="ai-goto" onclick="show('${sk}',document.querySelectorAll('.nav-btn')[${idx}])">Ver en dashboard: ${navSec} →</button>`;
+    }
+    wrap.innerHTML=`<div class="ai-panel"><div class="ai-head"><div class="ai-head-title">&#10003; "${q}"</div><button class="ai-close" onclick="document.getElementById('aiWrap').style.display='none'">×</button></div><div class="ai-body">${out}</div></div>`;
+  }catch(e){
+    wrap.innerHTML=`<div class="ai-panel"><div class="ai-head"><div class="ai-head-title" style="color:var(--red-dk)">Error</div><button class="ai-close" onclick="document.getElementById('aiWrap').style.display='none'">×</button></div><div class="ai-body"><p style="font-size:12px;color:var(--text2)">No se pudo conectar: ${e.message}</p></div></div>`;
+  }
+  btn.disabled=false;btn.textContent='Consultar ↗';
+}
+document.getElementById('aiQ').addEventListener('keydown',e=>{if(e.key==='Enter')runAI();});
+</script>
+</body>
+</html>
